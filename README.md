@@ -1,127 +1,147 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NeoChrono - Unique Stopwatch</title>
+  <title>Stopwatch App</title>
   <style>
     body {
-      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      font-size: 3em;
+    }
+
+    #display {
+      font-size: 3em;
+      margin: 20px auto;
+      padding: 20px;
+      border: 3px solid white;
+      border-radius: 10px;
+      width: 300px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .buttons {
+      margin: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1.1em;
+      margin: 0 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    #startStop {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    #reset {
+      background-color: #f44336;
+      color: white;
+    }
+
+    #lap {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    ul {
+      list-style: none;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: radial-gradient(circle at top left, #0f2027, #203a43, #2c5364);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }h1 {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
-  letter-spacing: 2px;
-}
+    }
 
-#time {
-  font-size: 4rem;
-  margin: 20px;
-  font-weight: bold;
-}
-
-.buttons, .laps {
-  margin: 10px;
-}
-
-button {
-  background: #1abc9c;
-  border: none;
-  color: #fff;
-  padding: 10px 20px;
-  margin: 5px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.3s ease;
-}
-
-button:hover {
-  background: #16a085;
-}
-
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-li {
-  background: rgba(255, 255, 255, 0.1);
-  margin: 5px 0;
-  padding: 5px 10px;
-  border-radius: 5px;
-}
-
+    li {
+      background: rgba(255, 255, 255, 0.1);
+      margin: 5px auto;
+      padding: 8px 12px;
+      width: 200px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
-  <h1>NeoChrono Stopwatch</h1>
-  <div id="time">00:00:00</div>
+  <h1>Stopwatch</h1>
+  <div id="display">00:00:00</div>
   <div class="buttons">
-    <button onclick="startStop()">Start</button>
-    <button onclick="resetTime()">Reset</button>
-    <button onclick="recordLap()">Lap</button>
+    <button id="startStop">Start</button>
+    <button id="lap">Lap</button>
+    <button id="reset">Reset</button>
   </div>
-  <div class="laps">
-    <h3>Lap Times</h3>
-    <ul id="lapList"></ul>
-  </div>  <script>
-    let [hours, minutes, seconds] = [0, 0, 0];
-    let displayTime = document.getElementById("time");
-    let timer = null;
+  <h2>Laps</h2>
+  <ul id="laps"></ul>
+
+  <script>
+    let startTime = 0;
+    let elapsed = 0;
+    let timerInterval;
+    let isRunning = false;
+
+    const display = document.getElementById('display');
+    const startStopBtn = document.getElementById('startStop');
+    const lapBtn = document.getElementById('lap');
+    const resetBtn = document.getElementById('reset');
+    const lapsList = document.getElementById('laps');
+
+    function formatTime(ms) {
+      let totalSeconds = Math.floor(ms / 1000);
+      let minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+      let seconds = String(totalSeconds % 60).padStart(2, '0');
+      let centiseconds = String(Math.floor((ms % 1000) / 10)).padStart(2, '0');
+      return `${minutes}:${seconds}:${centiseconds}`;
+    }
 
     function updateDisplay() {
-      let h = hours < 10 ? "0" + hours : hours;
-      let m = minutes < 10 ? "0" + minutes : minutes;
-      let s = seconds < 10 ? "0" + seconds : seconds;
-      displayTime.innerText = `${h}:${m}:${s}`;
+      display.textContent = formatTime(elapsed);
     }
 
-    function stopwatch() {
-      seconds++;
-      if (seconds === 60) {
-        seconds = 0;
-        minutes++;
-      }
-      if (minutes === 60) {
-        minutes = 0;
-        hours++;
-      }
-      updateDisplay();
-    }
-
-    function startStop() {
-      if (timer === null) {
-        timer = setInterval(stopwatch, 1000);
-        event.target.innerText = "Pause";
+    startStopBtn.addEventListener('click', () => {
+      if (!isRunning) {
+        startTime = Date.now() - elapsed;
+        timerInterval = setInterval(() => {
+          elapsed = Date.now() - startTime;
+          updateDisplay();
+        }, 10);
+        startStopBtn.textContent = 'Pause';
+        isRunning = true;
       } else {
-        clearInterval(timer);
-        timer = null;
-        event.target.innerText = "Start";
+        clearInterval(timerInterval);
+        startStopBtn.textContent = 'Start';
+        isRunning = false;
       }
-    }
+    });
 
-    function resetTime() {
-      clearInterval(timer);
-      timer = null;
-      [hours, minutes, seconds] = [0, 0, 0];
+    resetBtn.addEventListener('click', () => {
+      clearInterval(timerInterval);
+      elapsed = 0;
       updateDisplay();
-      document.querySelector(".buttons button").innerText = "Start";
-      document.getElementById("lapList").innerHTML = "";
-    }
+      lapsList.innerHTML = '';
+      startStopBtn.textContent = 'Start';
+      isRunning = false;
+    });
 
-    function recordLap() {
-      const lapList = document.getElementById("lapList");
-      const li = document.createElement("li");
-      li.innerText = displayTime.innerText;
-      lapList.appendChild(li);
-    }
-  </script></body>
+    lapBtn.addEventListener('click', () => {
+      if (isRunning) {
+        const li = document.createElement('li');
+        li.textContent = formatTime(elapsed);
+        lapsList.appendChild(li);
+      }
+    });
+  </script>
+</body>
 </html>
